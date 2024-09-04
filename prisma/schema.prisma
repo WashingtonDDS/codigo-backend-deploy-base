@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Author {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  bio       String?
+  cpf       String
+  pais      String?  @db.Char(2)
+  createdAt DateTime @default(now()) @map("created_at")
+  profile   Profile?
+  posts     Post[]
+
+  @@map("authors")
+}
+
+// Profile -> um para um
+model Profile {
+  id          String @id @default(uuid())
+  description String
+  author      Author @relation(fields: [authorId], references: [id])
+  authorId    Int    @unique @map("author_id")
+
+  @@map("profiles")
+}
+
+// Posts -> um para muitos
+model Post {
+  id           String         @id @default(uuid())
+  title        String
+  content      String
+  createdAt    DateTime       @default(now()) @db.Timestamptz()
+  author       Author         @relation(fields: [authorId], references: [id])
+  authorId     Int            @map("author_id")
+  postCategory PostCategory[]
+
+  @@map("posts")
+}
+
+// Category -> muitos para muitos
+model Category {
+  id           String         @id @default(uuid())
+  name         String
+  postCategory PostCategory[]
+
+  @@map("categories")
+}
+
+model PostCategory {
+  post   Post   @relation(fields: [postId], references: [id])
+  postId String @map("post_id")
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String   @map("category_id")
+
+  @@id([postId, categoryId])
+  @@map("post_category")
+}
